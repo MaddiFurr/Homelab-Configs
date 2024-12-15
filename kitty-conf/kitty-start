@@ -1,0 +1,8 @@
+# This file will house the startup config for kitty
+
+# First Tab
+launch --title "Term 0"
+
+# Second Tab
+new_tab
+launch --title "Term 1"
