@@ -1,0 +1,41 @@
+# When adding the Unbound service as the upstream DNS server when configuring AdGuard Home, use the 172.20.0.2:53 address.
+
+services:
+  unbound:
+    image: mvance/unbound:latest
+    container_name: unbound
+    restart: unless-stopped
+    ports:
+      - "5353:53/tcp"
+      - "5353:53/udp"
+    volumes:
+      - ./unbound:/opt/unbound/etc/unbound
+    networks:
+      adguard_unbound_network:
+        ipv4_address: 172.20.0.2
+
+  adguardhome:
+    image: adguard/adguardhome:latest
+    container_name: adguardhome
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "8080:80/tcp"
+      - "443:443/tcp"
+      - "853:853/tcp"
+      - "3000:3000/tcp"
+    volumes:
+      - ./adguard/config:/opt/adguardhome/conf
+      - ./adguard/data:/opt/adguardhome/work
+    networks:
+      adguard_unbound_network:
+        ipv4_address: 172.20.0.3
+    depends_on:
+      - unbound
+
+networks:
+  adguard_unbound_network:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
