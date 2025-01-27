@@ -22,7 +22,7 @@ services:
       - "53:53/tcp"
       - "53:53/udp"
       - "8080:80/tcp"
-      - "443:443/tcp"
+      # - "443:443/tcp"
       - "853:853/tcp"
       - "3000:3000/tcp"
     volumes:
@@ -33,9 +33,20 @@ services:
         ipv4_address: 172.20.0.3
     depends_on:
       - unbound
+  
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/html:/usr/share/nginx/html
+      - ./nginx/certs:/etc/nginx/certs
 
 networks:
   adguard_unbound_network:
     ipam:
       config:
         - subnet: 172.20.0.0/24
+  
+  
