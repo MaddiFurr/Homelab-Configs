@@ -1,4 +1,5 @@
 - hosts: fedora_vms
+  become: yes
   tasks:
     - name: Update package manager cache
       dnf:
