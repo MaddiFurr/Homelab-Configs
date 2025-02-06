@@ -1,0 +1,53 @@
+services:
+  blog:
+    image: cutiegamermaddi/maddiwtf
+    ports:
+      - 80:80
+
+
+  littlelink-server:
+    image: ghcr.io/techno-tim/littlelink-server:latest
+    container_name: littlelink-server
+    environment:
+      - META_TITLE=Maddi The Fuskey
+      - META_DESCRIPTION=Therian ΘΔ | Trans 🏳️‍⚧️ | Home Labber | Tech Enthusiast | Hobbyist Programmer
+      - META_AUTHOR=Maddi
+      - META_KEYWORDS=HomeLab, Programming,
+      - LANG=en
+      - META_INDEX_STATUS=all
+      - OG_SITE_NAME=Maddi's Socials
+      - OG_TITLE=Maddi's Socials
+      - OG_DESCRIPTION=The Social Media Links For Maddi
+      - OG_URL=https://maddi.wtf
+      - OG_IMAGE=https://pbs.twimg.com/profile_images/1883050241915510784/OAMkK9zc_400x400.jpg
+      - OG_IMAGE_WIDTH=400
+      - OG_IMAGE_HEIGHT=400
+      #- GA_TRACKING_ID=G-XXXXXXXXXX
+      - THEME=Dark
+      - FAVICON_URL=https://pbs.twimg.com/profile_images/1883050241915510784/OAMkK9zc_200x200.jpg
+      - AVATAR_URL=https://pbs.twimg.com/profile_images/1883050241915510784/OAMkK9zc_200x200.jpg
+      - AVATAR_2X_URL=https://pbs.twimg.com/profile_images/1883050241915510784/OAMkK9zc_400x400.jpg
+      - AVATAR_ALT=Maddi's Profile Pic
+      - NAME=Maddi The Fuskey
+      - BIO=Therian ΘΔ | Trans 🏳️‍⚧️ | Home Labber | Tech Enthusiast | Hobbyist Programmer
+      # use ENV variable names for order, listed buttons will be boosted to the top
+      #- BUTTON_ORDER=YOUTUBE,TWITCH,TWITTER,GITHUB,INSTAGRAM,LINKED_IN,DISCORD,FACEBOOK,TIKTOK,PATREON,GEAR,DOCUMENTATION
+      # you can render an unlimited amount of custom buttons by adding
+      # the CUSTOM_BUTTON_* variables and by using a comma as a separator.
+      - CUSTOM_BUTTON_TEXT=Bluesky
+      - CUSTOM_BUTTON_URL=https://bsky.app/profile/maddi.wtf
+      - CUSTOM_BUTTON_COLOR=#0886fe
+      - CUSTOM_BUTTON_TEXT_COLOR=#ffffff,#ffffff
+      - CUSTOM_BUTTON_ALT_TEXT=Bluesky
+      - CUSTOM_BUTTON_NAME=BLUESKY
+      - CUSTOM_BUTTON_ICON=fa-brands fa-bluesky
+      - GITHUB=https://github.com/MaddiFurr
+      - TWITTER=https://x.com/MaddiWTFF
+      - TWITCH=https://www.twitch.tv/maddithefuskey
+      - DISCORD=https://discord.maddi.wtf
+      - FOOTER=Maddi The Fuskey © 2025
+    ports:
+      - 8080:3000
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
