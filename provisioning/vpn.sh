@@ -63,12 +63,6 @@ if [ -z "$PREAUTH_KEY" ]; then
   echo
 fi
 
-# Validate the entered key (basic check)
-if [[ ! "$PREAUTH_KEY" =~ ^hu_[a-zA-Z0-9]{64,}$ ]]; then
-    log_message "Invalid pre-auth key format. It should start with 'hu_' and be a long alphanumeric string. Exiting."
-    exit 1
-fi
-
 # 4. Attempt to log in using the pre-auth key
 log_message "Attempting to login to Headscale using pre-auth key."
 sudo tailscale up --login-server="$HEADSCALE_URL" --authkey="$PREAUTH_KEY" --force-reauth=false --reset=false --ssh --advertise-routes=auto
