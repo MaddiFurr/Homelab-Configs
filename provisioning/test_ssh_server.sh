@@ -31,18 +31,18 @@ update_firewall() {
     if command -v firewall-cmd &> /dev/null; then
         log_message "firewalld detected inside container. Skipping firewall rule update as it's typically controlled by LXC host."
         # If for some reason you run firewalld inside a container and want to manage it, uncomment:
-        # sudo firewall-cmd --zone=public --add-port=$port/tcp --permanent
-        # sudo firewall-cmd --reload
+        # firewall-cmd --zone=public --add-port=$port/tcp --permanent
+        # firewall-cmd --reload
         # if [ "$port" != "$OLD_SSH_PORT" ]; then
-        #     sudo firewall-cmd --zone=public --remove-port=$OLD_SSH_PORT/tcp --permanent
-        #     sudo firewall-cmd --reload
+        #     firewall-cmd --zone=public --remove-port=$OLD_SSH_PORT/tcp --permanent
+        #     firewall-cmd --reload
         # fi
     elif command -v ufw &> /dev/null; then
         log_message "ufw detected inside container. Skipping firewall rule update as it's typically controlled by LXC host."
         # If for some reason you run ufw inside a container and want to manage it, uncomment:
-        # sudo ufw allow $port/tcp
+        # ufw allow $port/tcp
         # if [ "$port" != "$OLD_SSH_PORT" ]; then
-        #     sudo ufw delete allow $OLD_SSH_PORT/tcp
+        #     ufw delete allow $OLD_SSH_PORT/tcp
         # fi
     else
         log_message "No common firewall manager (firewalld/ufw) found inside container. Remember to open port $port/tcp on your LXC host's firewall!"
@@ -62,11 +62,11 @@ log_message "Ensuring curl is installed for downloading CA key."
 if ! command -v curl &> /dev/null; then
     log_message "curl not found. Installing curl..."
     if command -v apt-get &> /dev/null; then
-        sudo apt-get update && sudo apt-get install -y curl
+        apt-get update && apt-get install -y curl
     elif command -v yum &> /dev/null; then
-        sudo yum install -y curl
-    elif command -v dnf &> /dev/null; then # Add dnf for newer Fedora/RHEL
-        sudo dnf install -y curl
+        yum install -y curl
+    elif command -v dnf &> /dev/null; then
+        dnf install -y curl
     else
         log_message "Error: Neither apt-get, yum, nor dnf found. Please install curl manually."
         exit 1
@@ -75,7 +75,7 @@ fi
 
 # 2. Download the CA Public Key
 log_message "Attempting to download CA public key from: $CA_PUB_KEY_URL"
-sudo curl -sfL "$CA_PUB_KEY_URL" -o "$TRUSTED_CA_KEYS_FILE"
+curl -sfL "$CA_PUB_KEY_URL" -o "$TRUSTED_CA_KEYS_FILE"
 if [ $? -ne 0 ]; then
     log_message "Error: Failed to download CA public key. Exiting."
     exit 1
@@ -83,8 +83,8 @@ fi
 log_message "CA public key downloaded and saved to $TRUSTED_CA_KEYS_FILE"
 
 # Set correct permissions
-sudo chmod 644 "$TRUSTED_CA_KEYS_FILE"
-sudo chown root:root "$TRUSTED_CA_KEYS_FILE"
+chmod 644 "$TRUSTED_CA_KEYS_FILE"
+chown root:root "$TRUSTED_CA_KEYS_FILE"
 log_message "Permissions set for $TRUSTED_CA_KEYS_FILE"
 
 # 3. Configure sshd_config
@@ -93,59 +93,58 @@ log_message "Updating $SSHD_CONFIG_FILE for CA authentication, no password login
 # Add or update TrustedUserCAKeys directive
 if ! grep -q "^TrustedUserCAKeys" "$SSHD_CONFIG_FILE"; then
     log_message "Adding TrustedUserCAKeys directive."
-    echo "TrustedUserCAKeys $TRUSTED_CA_KEYS_FILE" | sudo tee -a "$SSHD_CONFIG_FILE" > /dev/null
+    echo "TrustedUserCAKeys $TRUSTED_CA_KEYS_FILE" | tee -a "$SSHD_CONFIG_FILE" > /dev/null
 else
     log_message "TrustedUserCAKeys directive already exists. Ensuring it points to the correct file."
-    sudo sed -i "s|^#\?\(TrustedUserCAKeys\s*\).*|\1 $TRUSTED_CA_KEYS_FILE|" "$SSHD_CONFIG_FILE"
+    sed -i "s|^#\?\(TrustedUserCAKeys\s*\).*|\1 $TRUSTED_CA_KEYS_FILE|" "$SSHD_CONFIG_FILE"
 fi
 
 # Set PasswordAuthentication to no (for SSH logins only)
 log_message "Setting PasswordAuthentication to no in $SSHD_CONFIG_FILE to disable password login over SSH."
 if grep -q "^PasswordAuthentication" "$SSHD_CONFIG_FILE"; then
-    sudo sed -i "s|^#\?\(PasswordAuthentication\s*\).*|\1 no|" "$SSHD_CONFIG_FILE"
+    sed -i "s|^#\?\(PasswordAuthentication\s*\).*|\1 no|" "$SSHD_CONFIG_FILE"
 else
-    echo "PasswordAuthentication no" | sudo tee -a "$SSHD_CONFIG_FILE" > /dev/null
+    echo "PasswordAuthentication no" | tee -a "$SSHD_CONFIG_FILE" > /dev/null
 fi
 
 # Ensure PubkeyAuthentication is 'yes' (needed for certs and regular public keys)
 log_message "Ensuring PubkeyAuthentication is set to yes."
 if grep -q "^PubkeyAuthentication" "$SSHD_CONFIG_FILE"; then
-    sudo sed -i "s|^#\?\(PubkeyAuthentication\s*\).*|\1 yes|" "$SSHD_CONFIG_FILE"
+    sed -i "s|^#\?\(PubkeyAuthentication\s*\).*|\1 yes|" "$SSHD_CONFIG_FILE"
 else
-    echo "PubkeyAuthentication yes" | sudo tee -a "$SSHD_CONFIG_FILE" > /dev/null
+    echo "PubkeyAuthentication yes" | tee -a "$SSHD_CONFIG_FILE" > /dev/null
 fi
 
 # Disable ChallengeResponseAuthentication (good practice unless specifically needed)
 log_message "Ensuring ChallengeResponseAuthentication is off."
 if grep -q "^ChallengeResponseAuthentication" "$SSHD_CONFIG_FILE"; then
-    sudo sed -i "s|^#\?\(ChallengeResponseAuthentication\s*\).*|\1 no|" "$SSHD_CONFIG_FILE"
+    sed -i "s|^#\?\(ChallengeResponseAuthentication\s*\).*|\1 no|" "$SSHD_CONFIG_FILE"
 else
-    echo "ChallengeResponseAuthentication no" | sudo tee -a "$SSHD_CONFIG_FILE" > /dev/null
+    echo "ChallengeResponseAuthentication no" | tee -a "$SSHD_CONFIG_FILE" > /dev/null
 fi
 
 # Explicitly Allow Root SSH Login (for testing only!)
 log_message "Setting PermitRootLogin to 'yes' (for testing purposes)."
 if grep -q "^PermitRootLogin" "$SSHD_CONFIG_FILE"; then
-    sudo sed -i "s|^#\?\(PermitRootLogin\s*\).*|\1 yes|" "$SSHD_CONFIG_FILE"
+    sed -i "s|^#\?\(PermitRootLogin\s*\).*|\1 yes|" "$SSHD_CONFIG_FILE"
 else
-    echo "PermitRootLogin yes" | sudo tee -a "$SSHD_CONFIG_FILE" > /dev/null
+    echo "PermitRootLogin yes" | tee -a "$SSHD_CONFIG_FILE" > /dev/null
 fi
-
 
 # Change SSH Port
 log_message "Changing SSH Port from $OLD_SSH_PORT to $NEW_SSH_PORT in $SSHD_CONFIG_FILE."
 if grep -q "^Port" "$SSHD_CONFIG_FILE"; then
-    sudo sed -i "s|^#\?\(Port\s*\).*|\1 $NEW_SSH_PORT|" "$SSHD_CONFIG_FILE"
+    sed -i "s|^#\?\(Port\s*\).*|\1 $NEW_SSH_PORT|" "$SSHD_CONFIG_FILE"
 else
-    echo "Port $NEW_SSH_PORT" | sudo tee -a "$SSHD_CONFIG_FILE" > /dev/null
+    echo "Port $NEW_SSH_PORT" | tee -a "$SSHD_CONFIG_FILE" > /dev/null
 fi
 
 # 4. Restart SSH Service
 log_message "Restarting SSH service to apply changes."
 if command -v systemctl &> /dev/null; then
-    sudo systemctl restart sshd
+    systemctl restart sshd
 elif command -v service &> /dev/null; then
-    sudo service sshd restart
+    service sshd restart
 else
     log_message "Warning: Could not find systemctl or service command. Please restart SSH service manually."
 fi
