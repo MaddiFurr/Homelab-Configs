@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Configuration
-HEADSCALE_URL="https://vpn.puppygirl.io" # Your Headscale instance URL
-HEADPLANE_KEY_GEN_URL="https://management-vpn.puppygirl.io/admin/settings/auth-keys" # <--- UPDATE THIS WITH YOUR ACTUAL HEADPLANE URL
-TAILSCALE_STATE_DIR="/var/lib/tailscale" # Standard Tailscale state directory
+HEADSCALE_URL="https://vpn.puppygirl.io"
+HEADPLANE_KEY_GEN_URL="https://management-vpn.puppygirl.io/admin/settings/auth-keys"
+TAILSCALE_STATE_DIR="/var/lib/tailscale"
 
 # --- Functions ---
 
@@ -14,14 +14,6 @@ log_message() {
 install_tailscale() {
   log_message "Tailscale not found. Installing..."
   curl -fsSL https://tailscale.com/install.sh | sudo bash
-
-  # If the above curl script doesn't work or you prefer manual setup:
-  # sudo apt-get update
-  # sudo apt-get install -y ca-certificates curl gnupg
-  # curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/jammy.asc | sudo gpg --dearmor -o /usr/share/keyrings/tailscale-archive-keyring.gpg
-  # echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu jammy main" | sudo tee /etc/apt/sources.list.d/tailscale.list
-  # sudo apt-get update
-  # sudo apt-get install -y tailscale
 
   if [ $? -ne 0 ]; then
     log_message "Error installing Tailscale. Exiting."
@@ -34,7 +26,7 @@ install_tailscale() {
 
 log_message "Starting Headscale auto-login script."
 
-PREAUTH_KEY="$1" # Attempt to get key from first argument
+PREAUTH_KEY="$1"
 
 # 1. Check if Tailscale is installed, install if not
 if ! command -v tailscale &> /dev/null; then
@@ -67,12 +59,12 @@ if [ -z "$PREAUTH_KEY" ]; then
   log_message "--------------------------------------------------------------------------"
   log_message "In Headplane, select the 'infrastructure' user, choose 'Reusable' and 'Ephemeral',"
   log_message "set an expiration, then click 'Generate' and copy the key."
-  read -p "Paste the generated pre-auth key here: " PREAUTH_KEY
+  read -p "Paste the generated pre-auth key here: " PREAUTH_KEY < /dev/tty
   echo
 fi
 
 # Validate the entered key (basic check)
-if [[ ! "$PREAUTH_KEY" =~ ^hu_[a-zA-Z0-9]{64,}$ ]]; then # Basic regex for 'hu_' followed by many chars
+if [[ ! "$PREAUTH_KEY" =~ ^hu_[a-zA-Z0-9]{64,}$ ]]; then
     log_message "Invalid pre-auth key format. It should start with 'hu_' and be a long alphanumeric string. Exiting."
     exit 1
 fi
