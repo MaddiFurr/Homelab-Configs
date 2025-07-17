@@ -9,7 +9,7 @@ GITHUB_REPO="Homelab-Configs"
 GITHUB_VAULT_SSH_CA_PATH="tree/main/provisioning/keys/vault_ssh_ca.pub"
 
 # Derived Variables
-GITHUB_RAW_URL_VAULT_CA="https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/${GITHUB_VAULT_SSH_CA_CA_PATH}"
+GITHUB_RAW_URL_VAULT_CA="https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/${GITHUB_VAULT_SSH_CA_PATH}"
 TRUSTED_KEYS_DIR="/etc/ssh/trusted_user_ca_keys.d"
 CA_PUB_FILE="vault_ssh_ca.pub"
 SSHD_CONFIG="/etc/ssh/sshd_config"
@@ -80,9 +80,34 @@ else
     message "    PubkeyAuthentication is already enabled."
 fi
 
+# PasswordAuthentication directive
+message "  - Setting PasswordAuthentication to 'no'..."
+if grep -q "^#\?PasswordAuthentication yes" "${SSHD_CONFIG}"; then
+    sed -i "s|^#\?PasswordAuthentication yes|PasswordAuthentication no|" "${SSHD_CONFIG}" || error_exit "Failed to disable PasswordAuthentication."
+    message "    PasswordAuthentication set to 'no'."
+elif ! grep -q "^PasswordAuthentication no" "${SSHD_CONFIG}"; then
+    echo "PasswordAuthentication no" | tee -a "${SSHD_CONFIG}" || error_exit "Failed to ensure PasswordAuthentication is disabled."
+    message "    Added PasswordAuthentication 'no' directive."
+else
+    message "    PasswordAuthentication is already disabled."
+fi
+
+# ChallengeResponseAuthentication directive
+message "  - Disabling ChallengeResponseAuthentication..."
+if grep -q "^#\?ChallengeResponseAuthentication yes" "${SSHD_CONFIG}"; then
+    sed -i "s|^#\?ChallengeResponseAuthentication yes|ChallengeResponseAuthentication no|" "${SSHD_CONFIG}" || error_exit "Failed to disable ChallengeResponseAuthentication."
+    message "    ChallengeResponseAuthentication set to 'no'."
+elif ! grep -q "^ChallengeResponseAuthentication no" "${SSHD_CONFIG}"; then
+    echo "ChallengeResponseAuthentication no" | tee -a "${SSHD_CONFIG}" || error_exit "Failed to ensure ChallengeResponseAuthentication is disabled."
+    message "    Added ChallengeResponseAuthentication 'no' directive."
+else
+    message "    ChallengeResponseAuthentication is already disabled."
+fi
+
+
 message "  - Restarting sshd service..."
 systemctl restart sshd || error_exit "Failed to restart sshd service. Check systemd logs (journalctl -xeu sshd)."
 message "    sshd service restarted successfully."
 
 echo ""
-echo "SUCCESS: SSH certificate configuration complete for Vault. You should now be able to SSH using Vault-issued certificates."
+echo "SUCCESS: SSH certificate configuration complete for Vault. Password authentication is now disabled. You should now be able to SSH using Vault-issued certificates."
