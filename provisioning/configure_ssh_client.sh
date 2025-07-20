@@ -273,7 +273,5 @@ main() {
     print_status "  curl -sSL <github-url> | bash && source $config_file"
 }
 
-# Check if script is being sourced or executed
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-fi
+main "$@"
+
