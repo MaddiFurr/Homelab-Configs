@@ -46,13 +46,12 @@ detect_shell() {
 # Install Vault CLI if not present
 install_vault_cli() {
     if command -v vault &> /dev/null; then
-        print_status "Vault CLI is already installed ($(vault version))"
+        print_status "Vault CLI is already installed"
         return 0
     fi
     
     print_status "Installing Vault CLI..."
     
-    # Detect OS and architecture
     local os=$(uname -s | tr '[:upper:]' '[:lower:]')
     local arch=$(uname -m)
     
@@ -69,14 +68,12 @@ install_vault_cli() {
             ;;
     esac
     
-    # Create temporary directory
     local temp_dir=$(mktemp -d)
-    local vault_version="1.15.2"  # You can update this to the latest version
+    local vault_version="1.15.2"
     local vault_url="https://releases.hashicorp.com/vault/${vault_version}/vault_${vault_version}_${os}_${arch}.zip"
     
     print_status "Downloading Vault CLI from: $vault_url"
     
-    # Download and install
     if ! curl -sL "$vault_url" -o "$temp_dir/vault.zip"; then
         print_error "Failed to download Vault CLI"
         rm -rf "$temp_dir"
@@ -92,7 +89,6 @@ install_vault_cli() {
     cd "$temp_dir"
     unzip -q vault.zip
     
-    # Install to /usr/local/bin (requires sudo) or ~/.local/bin
     if [ -w "/usr/local/bin" ] || sudo -n true 2>/dev/null; then
         print_status "Installing Vault CLI to /usr/local/bin (requires sudo)"
         sudo mv vault /usr/local/bin/
@@ -103,7 +99,6 @@ install_vault_cli() {
         mv vault ~/.local/bin/
         chmod +x ~/.local/bin/vault
         
-        # Add ~/.local/bin to PATH if not already there
         if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
             print_status "Adding ~/.local/bin to PATH in shell configuration"
             local config_file=$(detect_shell)
@@ -111,7 +106,6 @@ install_vault_cli() {
         fi
     fi
     
-    # Clean up
     rm -rf "$temp_dir"
     
     print_status "Vault CLI installed successfully"
