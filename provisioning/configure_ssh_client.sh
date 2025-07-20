@@ -158,7 +158,7 @@ get_vault_ssh_cert() {
   # --- Configuration ---
   local GITHUB_USER="MaddiFurr"
   local GITHUB_REPO="Homelab-Configs"
-  local GITHUB_VAULT_CRT_PATH="main/provisioning/keys/vault.crt"
+  local GITHUB_VAULT_CRT_PATH="provisioning/keys/vault.crt"
 
   local VAULT_SERVER_ADDRESS="https://vault.idm.puppygirl.io:8200"
   local VAULT_CA_CERT_PATH="${HOME}/vault.crt"
@@ -223,6 +223,27 @@ EOF
 main() {
     print_status "PuppyGirl Vault SSH Certificate Setup"
     print_status "======================================"
+
+    # Define the IP address and hostname to be added
+    IP_ADDRESS="10.150.0.2"
+    HOSTNAME="vault.idm.puppygirl.io"
+    
+    # Create the host entry string
+    HOST_ENTRY="${IP_ADDRESS} ${HOSTNAME}"
+    
+    # Check if the entry already exists in /etc/hosts
+    if grep -q "${HOSTNAME}" /etc/hosts; then
+        echo "Updating existing entry for ${HOSTNAME} in /etc/hosts..."
+        # Use sed to replace the existing line with the new entry
+        sudo sed -i "/${HOSTNAME}/c\\${HOST_ENTRY}" /etc/hosts
+    else
+        echo "Adding new entry for ${HOSTNAME} to /etc/hosts..."
+        # Append the new entry to the end of the file
+        echo "${HOST_ENTRY}" | sudo tee -a /etc/hosts > /dev/null
+    fi
+    
+    echo "Host entry updated successfully."
+
     
     # Install Vault CLI if needed
     install_vault_cli
